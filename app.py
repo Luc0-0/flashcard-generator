@@ -3,6 +3,7 @@ import pdfplumber
 import os
 import openai
 
+# Grab your OpenAI API key from environment variables
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def extract_text_from_pdf(pdf_file):
@@ -13,26 +14,22 @@ def extract_text_from_pdf(pdf_file):
             if page_text:
                 text += page_text + "\n"
     return text
+
 def generate_flashcards(text):
-    prompt = (
-        "You are an expert teacher. Create flashcards from the following text. "
-        "For each flashcard, write a question and an answer.\n\n"
-        f"Text:\n{text}\n\nFlashcards:\n"
-    )
+    messages = [
+        {"role": "system", "content": "You are an expert teacher."},
+        {"role": "user", "content": f"Create flashcards from the following text. For each flashcard, write a question and an answer.\n\n{text}"}
+    ]
 
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",  # or "gpt-4" if you have access
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant that creates flashcards."},
-            {"role": "user", "content": prompt}
-        ],
+        model="gpt-3.5-turbo",  # Use "gpt-4" if you have access and want better quality
+        messages=messages,
         max_tokens=500,
         temperature=0.5,
         n=1,
     )
 
-    return response.choices[0].message.content.strip()
-
+    return response.choices[0].message['content'].strip()
 
 def main():
     st.title("Flashcard Generator AI - Text & PDF Input Demo")
