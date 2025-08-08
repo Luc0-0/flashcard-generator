@@ -13,7 +13,6 @@ def extract_text_from_pdf(pdf_file):
             if page_text:
                 text += page_text + "\n"
     return text
-
 def generate_flashcards(text):
     prompt = (
         "You are an expert teacher. Create flashcards from the following text. "
@@ -21,16 +20,19 @@ def generate_flashcards(text):
         f"Text:\n{text}\n\nFlashcards:\n"
     )
 
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=prompt,
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",  # or "gpt-4" if you have access
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant that creates flashcards."},
+            {"role": "user", "content": prompt}
+        ],
         max_tokens=500,
         temperature=0.5,
         n=1,
-        stop=None,
     )
 
-    return response.choices[0].text.strip()
+    return response.choices[0].message.content.strip()
+
 
 def main():
     st.title("Flashcard Generator AI - Text & PDF Input Demo")
