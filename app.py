@@ -1,10 +1,10 @@
 import streamlit as st
 import pdfplumber
 import os
-import openai
+from openai import OpenAI
 
-# Grab your OpenAI API key from environment variables
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Initialize OpenAI client with API key from environment variables
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def extract_text_from_pdf(pdf_file):
     text = ""
@@ -16,20 +16,27 @@ def extract_text_from_pdf(pdf_file):
     return text
 
 def generate_flashcards(text):
-    messages = [
-        {"role": "system", "content": "You are an expert teacher."},
-        {"role": "user", "content": f"Create flashcards from the following text. For each flashcard, write a question and an answer.\n\n{text}"}
-    ]
+    system_message = {
+        "role": "system",
+        "content": "You are an expert teacher. Create flashcards from the provided text."
+    }
+    user_message = {
+        "role": "user",
+        "content": (
+            f"Here is the text to generate flashcards from:\n\n{text}\n\n"
+            "Please write flashcards in Q&A format."
+        )
+    }
 
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",  # Use "gpt-4" if you have access and want better quality
-        messages=messages,
+    response = client.chat.completions.create(
+        model="gpt-4o",  # or gpt-3.5-turbo, or whichever model you want
+        messages=[system_message, user_message],
         max_tokens=500,
         temperature=0.5,
         n=1,
     )
 
-    return response.choices[0].message['content'].strip()
+    return response.choices[0].message.content.strip()
 
 def main():
     st.title("Flashcard Generator AI - Text & PDF Input Demo")
@@ -39,7 +46,6 @@ def main():
     text = ""
     if input_option == "Paste Text":
         text = st.text_area("Paste your text here:", height=200)
-
     elif input_option == "Upload PDF":
         uploaded_file = st.file_uploader("Upload a PDF file", type=["pdf"])
         if uploaded_file:
